@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -25,7 +26,11 @@ func NewViper() *viper.Viper {
 	config.SetConfigType("env")
 	config.AutomaticEnv()
 	if err := config.MergeInConfig(); err != nil {
-		if !os.IsNotExist(err) {
+		// Handle both viper.ConfigFileNotFoundError (config name search) and
+		// os.PathError/syscall.ENOENT (explicit file path not found).
+		// If .env is absent, fall back to OS environment variables via AutomaticEnv().
+		var notFound viper.ConfigFileNotFoundError
+		if !os.IsNotExist(err) && !errors.As(err, &notFound) {
 			panic(fmt.Errorf("Fatal error env file: %s \n", err))
 		}
 	}
