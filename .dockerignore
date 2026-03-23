@@ -1,0 +1,23 @@
+# Version control
+.git/
+.gitignore
+
+# Secrets — never bake into image
+.env
+.env.*
+
+# IDE files
+.idea/
+
+# Build output (will be rebuilt inside Docker)
+bin/
+
+# Test files (not needed in production image)
+test/
+
+# Documentation
+docs/
+*.md
+
+# Go test cache
+*.test
