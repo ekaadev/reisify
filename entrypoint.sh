@@ -6,7 +6,7 @@ set -e
 # This loop is especially important in local dev where the Postgres container
 # and the app container start at the same time.
 echo "Waiting for Postgres at ${DATABASE_HOST}:${DATABASE_PORT}..."
-until pg_isready -h "$DATABASE_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USERNAME" -q; do
+until pg_isready -h "$DATABASE_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USERNAME" -d postgres -q; do
   sleep 2
 done
 echo "Postgres is ready."
