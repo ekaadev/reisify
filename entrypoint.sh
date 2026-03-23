@@ -12,6 +12,8 @@ done
 echo "Postgres is ready."
 
 # Build the database URL for golang-migrate from individual env vars.
+# Note: DATABASE_PASSWORD must not contain URL-special characters (@, /, #, ?, %, +).
+# If it does, the URL will be malformed and migrate will fail to parse it.
 DATABASE_URL="postgres://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?sslmode=disable"
 
 # Run all pending migrations.

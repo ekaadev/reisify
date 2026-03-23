@@ -118,6 +118,7 @@ DATABASE_PORT=5432
 DATABASE_NAME=slido_clone
 JWT_SECRET=your_jwt_secret
 REDIS_DB=0
+REDIS_PORT=6379
 APP_IMAGE=ghcr.io/youruser/slido-clone-backend:latest
 ```
 
