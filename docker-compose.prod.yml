@@ -1,0 +1,38 @@
+services:
+  app:
+    # In production, use a pre-built image from a registry.
+    # Set APP_IMAGE in the VPS environment, e.g.:
+    #   APP_IMAGE=ghcr.io/youruser/slido-clone-backend:latest
+    # Or build on the VPS: replace `image:` with `build: .`
+    image: ${APP_IMAGE:-slido-clone-backend:latest}
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      # host.docker.internal resolves to the VPS host machine (where Postgres runs natively).
+      DATABASE_HOST: host.docker.internal
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
+      DATABASE_NAME: ${DATABASE_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: ${REDIS_DB:-0}
+    # Map host.docker.internal to the host machine's IP via Docker's host-gateway.
+    # This is the standard way to reach a native service from inside a Docker container on Linux.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # No ports exposed: Redis is only reachable from within this compose network.
+    # Exposing Redis publicly is a security risk — it has no authentication by default.
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
