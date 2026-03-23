@@ -9,6 +9,13 @@ go run cmd/web/main.go                                            # Run server
 go build -o bin/server cmd/web/main.go                            # Build
 go mod tidy
 
+# Docker (local dev — starts app + Postgres + Redis)
+docker compose up --build                                         # Start full stack
+docker compose up -d --build                                      # Start in background
+docker compose down                                               # Stop (keep data)
+docker compose down -v                                            # Stop + delete data volume
+docker compose logs -f app                                        # Stream app logs
+
 # Unit tests (use go-sqlmock, no DB required)
 go test ./test/unit/... -v
 go test ./test/unit/... -run TestFunctionName -v

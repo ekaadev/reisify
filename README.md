@@ -2,13 +2,31 @@
 
 Backend service untuk aplikasi Slido Clone dengan fitur Q&A, Polling, Live Chat, dan Leaderboard.
 
+## Getting Started
+
+### Quick Start (Docker)
+
+The fastest way to run the full stack locally. Requires [Docker](https://docs.docker.com/get-docker/).
+
+```bash
+cp .env.example .env   # fill in values (set DATABASE_PORT=5432)
+docker compose up --build
+```
+
+This starts the Go app, PostgreSQL, and Redis in one command. Migrations run automatically.
+Server: `http://localhost:3000`
+
+See [docs/docker.md](docs/docker.md) for the full Docker guide (production deploy, troubleshooting, etc.).
+
+---
+
+### Manual Setup
+
 ## Prerequisites
 
-- Go 1.21+
+- Go 1.25+
 - PostgreSQL 14+
 - Redis 7.0+
-
-## Getting Started
 
 ### 1. Install Dependencies
 
