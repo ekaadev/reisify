@@ -123,3 +123,54 @@ Server akan berjalan di `http://localhost:3000` (atau sesuai konfigurasi).
 redis-cli ping
 # Expected output: PONG
 ```
+
+---
+
+## Testing
+
+### Unit Tests
+
+No external dependencies required. Run anytime:
+
+```bash
+go test ./test/unit/... -v
+go test ./test/unit/... -run TestFunctionName -v
+```
+
+### Integration Tests
+
+Integration tests always run **on the host machine** (outside Docker) against native PostgreSQL and Redis. They use Fiber's `app.Test()` to bootstrap the app in-memory — no running server needed, just a real database.
+
+**One-time setup:**
+
+```bash
+# Create the test database
+psql -U slido_user -c "CREATE DATABASE slido_clone_test OWNER slido_user;"
+
+# Create .env.test
+cp .env.example .env.test
+```
+
+Edit `.env.test`:
+```
+DATABASE_USERNAME=slido_user
+DATABASE_PASSWORD=password
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=slido_clone_test
+JWT_SECRET=test_secret
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=1
+```
+
+**Run:**
+
+```bash
+go test ./test/integration/... -v
+go test ./test/integration/... -run TestRegister_Success -v
+```
+
+> **Note:** If you use `docker compose up` to run the app, keep native PostgreSQL and Redis
+> running alongside it — the Docker Compose services are not port-exposed to the host,
+> so integration tests must use the native services.

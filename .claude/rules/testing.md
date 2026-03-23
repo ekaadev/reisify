@@ -32,9 +32,11 @@ go test ./test/unit/... -run TestFunctionName -v
 **Tooling:** Fiber's `app.Test()` + `testify/assert` against a real PostgreSQL database.
 
 **Prerequisites:**
-1. PostgreSQL running with a `slido_clone_test` database: `CREATE DATABASE slido_clone_test OWNER slido_user;`
-2. Redis running
-3. `.env.test` present at project root (copy `.env.example`, set `DATABASE_NAME=slido_clone_test`, `REDIS_DB=1`)
+1. PostgreSQL running **natively on the host** with a `slido_clone_test` database: `CREATE DATABASE slido_clone_test OWNER slido_user;`
+2. Redis running **natively on the host**
+3. `.env.test` present at project root (copy `.env.example`, set `DATABASE_NAME=slido_clone_test`, `DATABASE_HOST=localhost`, `REDIS_DB=1`)
+
+**Important — Docker:** Integration tests always run on the host, never inside Docker. The `docker-compose.yml` services do not expose ports to the host, so they cannot be used for integration tests. Native PostgreSQL and Redis must be running alongside Docker when both are used.
 
 **How it works:**
 - `TestMain` in `setup_test.go` loads `.env.test`, connects to the test DB, runs all migrations via `golang-migrate`, bootstraps the full Fiber app, and runs tests.
