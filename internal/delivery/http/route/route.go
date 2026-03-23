@@ -36,6 +36,10 @@ func (c *RouteConfig) SetupWebSocketRoute() {
 
 // SetupGuestRoute tambahkan route yang bisa diakses tanpa autentikasi
 func (c *RouteConfig) SetupGuestRoute() {
+	c.App.Get("/health", func(ctx *fiber.Ctx) error {
+		return ctx.SendStatus(fiber.StatusOK)
+	})
+
 	c.App.Post("/api/v1/users/register", c.UserController.Register)
 	c.App.Post("/api/v1/users/login", c.UserController.Login)
 	c.App.Post("/api/v1/users/anonymous", c.UserController.Anon)
