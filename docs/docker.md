@@ -1,7 +1,6 @@
 # Docker Operational Guide
 
 This document explains how to build, run, and maintain the application using Docker.
-For the design rationale and architecture decisions, see `docs/superpowers/specs/2026-03-23-docker-design.md`.
 
 ---
 
