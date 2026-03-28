@@ -49,9 +49,5 @@ Load only the files relevant to your task:
 |-----------|--------------|
 | [coding-standards.md](.claude/rules/coding-standards.md) | Always |
 | [architecture.md](.claude/rules/architecture.md) | Adding/modifying any domain, controller, use case, or repository |
-| [auth.md](.claude/rules/auth.md) | Auth, JWT, middleware, login/logout |
 | [database.md](.claude/rules/database.md) | Schema changes, migrations, GORM queries |
-| [websocket.md](.claude/rules/websocket.md) | WebSocket events, hub, broadcasting, WebRTC/conference |
-| [xp-gamification.md](.claude/rules/xp-gamification.md) | XP awards, leaderboard, timeline |
-| [domain-rules.md](.claude/rules/domain-rules.md) | Rooms, participants, questions, polls |
 | [testing.md](.claude/rules/testing.md) | Writing or running tests |
