@@ -40,6 +40,12 @@ func (c *QuestionController) Submit(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("Submit - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create request
 	request := &model.SubmitQuestionRequest{
 		RoomID:        uint(roomIDUint64),
@@ -79,6 +85,12 @@ func (c *QuestionController) List(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("List - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// parse query params
 	request := &model.GetQuestionsRequest{
 		RoomID:        uint(roomIDUint64),
@@ -113,6 +125,10 @@ func (c *QuestionController) Upvote(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if auth.ParticipantID == nil || auth.RoomID == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "You must join a room first")
+	}
+
 	// create request
 	request := &model.UpvoteRequest{
 		QuestionID:    uint(questionIDUint64),
@@ -145,6 +161,10 @@ func (c *QuestionController) RemoveUpvote(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("RemoveUpvote - Invalid question_id: %v", err)
 		return fiber.ErrBadRequest
+	}
+
+	if auth.ParticipantID == nil || auth.RoomID == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "You must join a room first")
 	}
 
 	// create request
@@ -187,11 +207,17 @@ func (c *QuestionController) Validate(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	// get room_id from question (need to get from usecase)
-	roomID, err := c.QuestionUseCase.QuestionRepository.GetRoomIDByQuestionID(c.QuestionUseCase.DB, uint(questionIDUint64))
+	// get room_id for the question via use case (not direct repo access)
+	roomID, err := c.QuestionUseCase.GetRoomIDByQuestionID(ctx.UserContext(), uint(questionIDUint64))
 	if err != nil {
 		c.Log.Warnf("Validate - GetRoomIDByQuestionID error: %v", err)
-		return fiber.ErrInternalServerError
+		return err
+	}
+
+	// caller's token must be scoped to this question's room
+	if auth.RoomID == nil || *auth.RoomID != roomID {
+		c.Log.Warnf("Validate - Token room_id does not match question's room %d", roomID)
+		return fiber.ErrForbidden
 	}
 
 	// create request
@@ -274,7 +300,7 @@ func (c *QuestionController) broadcastQuestionValidated(roomID uint, response *m
 func mustMarshalJSON(v interface{}) []byte {
 	data, err := json.Marshal(v)
 	if err != nil {
-		panic(err)
+		return []byte("{}")
 	}
 	return data
 }

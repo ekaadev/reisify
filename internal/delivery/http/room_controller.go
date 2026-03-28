@@ -68,12 +68,14 @@ func (c *RoomController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
+	// set room-scoped token as HTTP-only cookie
+	setAuthCookie(ctx, newToken)
+
 	// return response
 	return ctx.Status(fiber.StatusCreated).JSON(model.WebResponse{
 		Data: map[string]interface{}{
 			"room":           response.Room,
 			"participant_id": response.ParticipantID,
-			"token":          newToken,
 		},
 	})
 }
@@ -118,6 +120,12 @@ func (c *RoomController) UpdateToClosed(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Invalid room id: %s", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(idUint64) {
+		c.Log.Warnf("UpdateToClosed - Caller does not belong to room %d", idUint64)
+		return fiber.ErrForbidden
 	}
 
 	request.PresenterID = *auth.UserID
@@ -172,6 +180,12 @@ func (c *RoomController) Delete(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("Delete - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create request
 	request := &model.DeleteRoomRequest{
 		PresenterID: *auth.UserID,
@@ -212,18 +226,18 @@ func (c *RoomController) SendAnnouncement(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// only the room presenter may send announcements, and only to their own room
+	if !auth.IsRoomOwner {
+		c.Log.Warnf("SendAnnouncement - User is not room owner")
+		return fiber.ErrForbidden
+	}
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("SendAnnouncement - Token room_id does not match URL room_id")
+		return fiber.ErrForbidden
+	}
+
 	request.PresenterID = *auth.UserID
 	request.RoomID = uint(roomIDUint64)
-
-	// validate presenter owns the room (simple check via room usecase)
-	roomRequest := &model.UpdateToCloseRoomRequestByID{
-		PresenterID: request.PresenterID,
-		RoomID:      request.RoomID,
-		Status:      "active", // dummy, just for validation
-	}
-	// Reuse the logic to check room ownership - but we just need to verify ownership
-	// For now, broadcast directly since authenticated user should be presenter
-	_ = roomRequest
 
 	// broadcast announcement ke room via websocket
 	announcementData := map[string]interface{}{

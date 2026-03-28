@@ -34,6 +34,12 @@ func (c *MessageController) Send(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("Send - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create model request
 	request := &model.SendMessageRequest{
 		RoomID:        uint(roomIDUint64),
@@ -70,6 +76,12 @@ func (c *MessageController) List(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Invalid room_id: %s", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("List - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
 	}
 
 	// parse query params

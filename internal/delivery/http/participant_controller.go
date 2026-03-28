@@ -47,6 +47,9 @@ func (c *ParticipantController) Join(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	// set room-scoped token as HTTP-only cookie
+	setAuthCookie(ctx, response.Token)
+
 	// return response
 	return ctx.Status(fiber.StatusCreated).JSON(model.WebResponse{
 		Data: response,
@@ -57,6 +60,10 @@ func (c *ParticipantController) Join(ctx *fiber.Ctx) error {
 func (c *ParticipantController) List(ctx *fiber.Ctx) error {
 	// get auth from locals
 	auth := middleware.GetUser(ctx)
+
+	if auth.ParticipantID == nil || auth.RoomID == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "You must join a room first")
+	}
 
 	// create a model request
 	request := &model.ListParticipantsRequest{
@@ -70,6 +77,12 @@ func (c *ParticipantController) List(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Invalid room id: %s", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if *auth.RoomID != uint(idUint64) {
+		c.Log.Warnf("List - Caller does not belong to room %d", idUint64)
+		return fiber.ErrForbidden
 	}
 
 	request.RoomID = uint(idUint64)
@@ -101,6 +114,10 @@ func (c *ParticipantController) Leaderboard(ctx *fiber.Ctx) error {
 	// get auth from locals
 	auth := middleware.GetUser(ctx)
 
+	if auth.ParticipantID == nil || auth.RoomID == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "You must join a room first")
+	}
+
 	// create model request
 	request := &model.GetLeaderboardRequest{
 		ParticipantID: *auth.ParticipantID,
@@ -111,6 +128,12 @@ func (c *ParticipantController) Leaderboard(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Invalid room id: %s", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if *auth.RoomID != uint(idUint64) {
+		c.Log.Warnf("Leaderboard - Caller does not belong to room %d", idUint64)
+		return fiber.ErrForbidden
 	}
 
 	request.RoomID = uint(idUint64)

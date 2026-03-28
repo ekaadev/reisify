@@ -49,6 +49,12 @@ func (c *PollController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("Create - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create request
 	request := &model.CreatePollRequest{
 		RoomID:      uint(roomIDUint64),
@@ -88,6 +94,16 @@ func (c *PollController) GetActive(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if auth.ParticipantID == nil || auth.RoomID == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "You must join a room first")
+	}
+
+	// caller must belong to the requested room
+	if *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("GetActive - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create request
 	request := &model.GetActivePollsRequest{
 		RoomID:        uint(roomIDUint64),
@@ -108,12 +124,20 @@ func (c *PollController) GetActive(ctx *fiber.Ctx) error {
 
 // GetHistory handler untuk mendapatkan poll history di room
 func (c *PollController) GetHistory(ctx *fiber.Ctx) error {
+	auth := middleware.GetUser(ctx)
+
 	// parse room_id from params
 	roomIDStr := ctx.Params("room_id")
 	roomIDUint64, err := strconv.ParseUint(roomIDStr, 10, 64)
 	if err != nil {
 		c.Log.Warnf("GetHistory - Invalid room_id: %v", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("GetHistory - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
 	}
 
 	// parse query params
@@ -188,9 +212,9 @@ func (c *PollController) Vote(ctx *fiber.Ctx) error {
 func (c *PollController) Close(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 
-	// check if user is presenter
-	if auth.Role != "presenter" && auth.Role != "admin" {
-		c.Log.Warnf("Close - User is not presenter")
+	// only the room presenter can close a poll
+	if !auth.IsRoomOwner {
+		c.Log.Warnf("Close - User is not room owner")
 		return fiber.ErrForbidden
 	}
 
@@ -302,7 +326,7 @@ func (c *PollController) broadcastLeaderboardUpdate(roomID uint, participantID u
 func pollMustMarshalJSON(v interface{}) []byte {
 	data, err := json.Marshal(v)
 	if err != nil {
-		panic(err)
+		return []byte("{}")
 	}
 	return data
 }

@@ -3,8 +3,12 @@ package route
 import (
 	"reisify/internal/delivery/http"
 	"reisify/internal/delivery/websocket"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 )
 
 type RouteConfig struct {
@@ -19,6 +23,8 @@ type RouteConfig struct {
 	ActivityController      *http.ActivityController
 	AuthMiddleware          fiber.Handler
 	WSHandler               *websocket.WebSocketHandler
+	Redis                   *redis.Client
+	Log                     *logrus.Logger
 }
 
 // Setup running all route setup here
@@ -40,9 +46,21 @@ func (c *RouteConfig) SetupGuestRoute() {
 		return ctx.SendStatus(fiber.StatusOK)
 	})
 
-	c.App.Post("/api/v1/users/register", c.UserController.Register)
-	c.App.Post("/api/v1/users/login", c.UserController.Login)
-	c.App.Post("/api/v1/users/anonymous", c.UserController.Anon)
+	// Use Redis-backed storage with in-memory fallback and circuit breaker.
+	// Falls back to per-process in-memory if Redis is nil or unavailable.
+	var storage fiber.Storage
+	if c.Redis != nil {
+		storage = NewFallbackStorage(c.Redis, c.Log)
+	}
+	authLimiter := limiter.New(limiter.Config{
+		Max:        10,
+		Expiration: 1 * time.Minute,
+		Storage:    storage,
+	})
+
+	c.App.Post("/api/v1/users/register", authLimiter, c.UserController.Register)
+	c.App.Post("/api/v1/users/login", authLimiter, c.UserController.Login)
+	c.App.Post("/api/v1/users/anonymous", authLimiter, c.UserController.Anon)
 
 	c.App.Get("/api/v1/rooms/:room_code", c.RoomController.Get)
 }

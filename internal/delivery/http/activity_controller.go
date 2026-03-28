@@ -37,6 +37,12 @@ func (c *ActivityController) GetTimeline(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("GetTimeline - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create request dengan query params
 	request := &model.GetTimelineRequest{
 		RoomID:        uint(roomIDUint64),
