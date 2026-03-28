@@ -75,6 +75,12 @@ func (c *ParticipantController) List(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(idUint64) {
+		c.Log.Warnf("List - Caller does not belong to room %d", idUint64)
+		return fiber.ErrForbidden
+	}
+
 	request.RoomID = uint(idUint64)
 
 	// call usecase to get list of participants
@@ -114,6 +120,12 @@ func (c *ParticipantController) Leaderboard(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Invalid room id: %s", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(idUint64) {
+		c.Log.Warnf("Leaderboard - Caller does not belong to room %d", idUint64)
+		return fiber.ErrForbidden
 	}
 
 	request.RoomID = uint(idUint64)
