@@ -2,9 +2,9 @@ services:
   app:
     # In production, use a pre-built image from a registry.
     # Set APP_IMAGE in the VPS environment, e.g.:
-    #   APP_IMAGE=ghcr.io/youruser/slido-clone-backend:latest
+    #   APP_IMAGE=ghcr.io/youruser/reisify:latest
     # Or build on the VPS: replace `image:` with `build: .`
-    image: ${APP_IMAGE:-slido-clone-backend:latest}
+    image: ${APP_IMAGE:-reisify:latest}
     ports:
       - "3000:3000"
     env_file: .env

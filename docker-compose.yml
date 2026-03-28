@@ -1,23 +1,8 @@
 services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    # env_file reads your local .env and injects all vars into the container.
-    # The app's viper.go will pick them up via AutomaticEnv().
-    env_file: .env
-    # Override host-specific vars that differ inside Docker networking.
-    environment:
-      DATABASE_HOST: postgres
-      REDIS_HOST: redis
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
   postgres:
     image: postgres:17-alpine
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -34,6 +19,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    ports:
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

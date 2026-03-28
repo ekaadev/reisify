@@ -1,0 +1,24 @@
+services:
+  postgres-test:
+    image: postgres:17-alpine
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME:-testuser}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-testpass}
+      POSTGRES_DB: reisify_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-testuser} -d reisify_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6381:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10

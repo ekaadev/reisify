@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "slido-clone-backend"
+    "name": "reisify"
   },
   "web": {
     "prefork": false,
