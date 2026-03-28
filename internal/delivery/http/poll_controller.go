@@ -49,6 +49,12 @@ func (c *PollController) Create(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("Create - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
+	}
+
 	// create request
 	request := &model.CreatePollRequest{
 		RoomID:      uint(roomIDUint64),

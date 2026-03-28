@@ -122,6 +122,12 @@ func (c *RoomController) UpdateToClosed(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(idUint64) {
+		c.Log.Warnf("UpdateToClosed - Caller does not belong to room %d", idUint64)
+		return fiber.ErrForbidden
+	}
+
 	request.PresenterID = *auth.UserID
 	request.RoomID = uint(idUint64)
 
@@ -172,6 +178,12 @@ func (c *RoomController) Delete(ctx *fiber.Ctx) error {
 	if err != nil {
 		c.Log.Warnf("Delete - Invalid room_id: %v", err)
 		return fiber.ErrBadRequest
+	}
+
+	// caller must belong to the requested room
+	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+		c.Log.Warnf("Delete - Caller does not belong to room %d", roomIDUint64)
+		return fiber.ErrForbidden
 	}
 
 	// create request
