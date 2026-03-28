@@ -199,11 +199,17 @@ func (c *QuestionController) Validate(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
-	// get room_id from question (need to get from usecase)
-	roomID, err := c.QuestionUseCase.QuestionRepository.GetRoomIDByQuestionID(c.QuestionUseCase.DB, uint(questionIDUint64))
+	// get room_id for the question via use case (not direct repo access)
+	roomID, err := c.QuestionUseCase.GetRoomIDByQuestionID(ctx.UserContext(), uint(questionIDUint64))
 	if err != nil {
 		c.Log.Warnf("Validate - GetRoomIDByQuestionID error: %v", err)
-		return fiber.ErrInternalServerError
+		return err
+	}
+
+	// caller's token must be scoped to this question's room
+	if auth.RoomID == nil || *auth.RoomID != roomID {
+		c.Log.Warnf("Validate - Token room_id does not match question's room %d", roomID)
+		return fiber.ErrForbidden
 	}
 
 	// create request

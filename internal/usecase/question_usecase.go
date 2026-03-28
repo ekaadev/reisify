@@ -357,6 +357,17 @@ func (c *QuestionUseCase) Validate(ctx context.Context, request *model.ValidateQ
 		return nil, fiber.ErrNotFound
 	}
 
+	// verify caller is the presenter of the question's room
+	var room entity.Room
+	if err = c.RoomRepository.FindById(tx, &room, question.RoomID); err != nil {
+		c.Log.Errorf("Validate - RoomRepository.FindById error: %v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+	if room.PresenterID != request.PresenterID {
+		c.Log.Warnf("Validate - User %d is not the presenter of room %d", request.PresenterID, question.RoomID)
+		return nil, fiber.ErrForbidden
+	}
+
 	// check if already validated
 	if question.IsValidatedByPresenter {
 		return nil, fiber.NewError(fiber.StatusConflict, "Question already validated")
@@ -404,4 +415,14 @@ func (c *QuestionUseCase) Validate(ctx context.Context, request *model.ValidateQ
 	question.IsValidatedByPresenter = true
 
 	return converter.QuestionToValidateResponse(question, XPPresenterValidate, participant.XPScore), nil
+}
+
+// GetRoomIDByQuestionID returns the room ID that owns the given question.
+func (c *QuestionUseCase) GetRoomIDByQuestionID(ctx context.Context, questionID uint) (uint, error) {
+	roomID, err := c.QuestionRepository.GetRoomIDByQuestionID(c.DB.WithContext(ctx), questionID)
+	if err != nil {
+		c.Log.Warnf("GetRoomIDByQuestionID - error: %v", err)
+		return 0, fiber.ErrInternalServerError
+	}
+	return roomID, nil
 }
