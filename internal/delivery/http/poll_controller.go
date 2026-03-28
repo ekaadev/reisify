@@ -94,8 +94,12 @@ func (c *PollController) GetActive(ctx *fiber.Ctx) error {
 		return fiber.ErrBadRequest
 	}
 
+	if auth.ParticipantID == nil || auth.RoomID == nil {
+		return fiber.NewError(fiber.StatusBadRequest, "You must join a room first")
+	}
+
 	// caller must belong to the requested room
-	if auth.RoomID == nil || *auth.RoomID != uint(roomIDUint64) {
+	if *auth.RoomID != uint(roomIDUint64) {
 		c.Log.Warnf("GetActive - Caller does not belong to room %d", roomIDUint64)
 		return fiber.ErrForbidden
 	}
@@ -208,9 +212,9 @@ func (c *PollController) Vote(ctx *fiber.Ctx) error {
 func (c *PollController) Close(ctx *fiber.Ctx) error {
 	auth := middleware.GetUser(ctx)
 
-	// check if user is presenter
-	if auth.Role != "presenter" && auth.Role != "admin" {
-		c.Log.Warnf("Close - User is not presenter")
+	// only the room presenter can close a poll
+	if !auth.IsRoomOwner {
+		c.Log.Warnf("Close - User is not room owner")
 		return fiber.ErrForbidden
 	}
 
