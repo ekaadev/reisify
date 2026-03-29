@@ -758,6 +758,48 @@ paths:
         '404':
           description: Poll not found
 
+  /rooms/{room_id}/timeline:
+    get:
+      tags:
+        - Activity
+      summary: Get unified activity timeline for a room
+      operationId: getTimeline
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: room_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: before
+          in: query
+          description: RFC3339 timestamp cursor — load items older than this
+          schema:
+            type: string
+        - name: after
+          in: query
+          description: RFC3339 timestamp cursor — load items newer than this
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Timeline items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTimelineResponseWrapper'
+        '403':
+          description: Not a member of this room
+        '404':
+          description: Room not found
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1652,4 +1694,42 @@ components:
         data:
           $ref: '#/components/schemas/SuccessResponse'
 
+    TimelineItem:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [message, question, poll, announcement]
+        id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        data:
+          type: object
+          description: Payload varies by type — message, question, poll, or announcement data
+
+    GetTimelineResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineItem'
+        has_more:
+          type: boolean
+        oldest_at:
+          type: string
+          description: RFC3339 cursor for loading older items
+          nullable: true
+        newest_at:
+          type: string
+          description: RFC3339 cursor for loading newer items
+          nullable: true
+
+    GetTimelineResponseWrapper:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/GetTimelineResponse'
 
