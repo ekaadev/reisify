@@ -5,7 +5,6 @@ import (
 	"reisify/internal/delivery/websocket"
 	"time"
 
-	"github.com/gofiber/contrib/v3/swaggerui"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/redis/go-redis/v9"
@@ -30,15 +29,6 @@ type RouteConfig struct {
 
 // Setup running all route setup here
 func (c *RouteConfig) Setup() {
-	cfg := swaggerui.Config{
-		BasePath: "/",
-		FilePath: "./api/api-spec.yaml",
-		Path:     "swagger",
-		Title:    "Reisify App",
-	}
-
-	c.App.Use(swaggerui.New(cfg))
-
 	c.SetupWebSocketRoute()
 	c.SetupGuestRoute()
 	c.SetupAuthRoute()
