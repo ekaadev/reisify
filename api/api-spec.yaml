@@ -22,6 +22,10 @@ tags:
     description: Polling operations
   - name: XPTransaction
     description: XP transaction history
+  - name: Question
+    description: Q&A question operations
+  - name: Activity
+    description: Unified activity timeline
 
 
 
@@ -139,7 +143,7 @@ paths:
         '400':
           description: Invalid request body
 
-  /rooms/my-rooms:
+  /users/me/rooms:
     get:
       tags:
         - Room
